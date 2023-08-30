@@ -56,6 +56,7 @@ from rest_framework.viewsets import ViewSet
 
 from documents import bulk_edit
 from documents.filters import ObjectOwnedOrGrantedPermissionsFilter
+from documents.models import db_settings
 from documents.permissions import PaperlessAdminPermissions
 from documents.permissions import PaperlessObjectPermissions
 from documents.permissions import get_objects_for_user_owner_aware
@@ -424,10 +425,16 @@ class DocumentViewSet(
         classifier = load_classifier()
 
         dates = []
-        if settings.NUMBER_OF_SUGGESTED_DATES > 0:
+        if db_settings.NUMBER_OF_SUGGESTED_DATES > 0:
             gen = parse_date_generator(doc.filename, doc.content)
             dates = sorted(
-                {i for i in itertools.islice(gen, settings.NUMBER_OF_SUGGESTED_DATES)},
+                {
+                    i
+                    for i in itertools.islice(
+                        gen,
+                        db_settings.NUMBER_OF_SUGGESTED_DATES,
+                    )
+                },
             )
 
         return Response(

@@ -264,11 +264,13 @@ def parse_date_generator(filename, text) -> Iterator[datetime.datetime]:
         )
 
     def __filter(date: datetime.datetime) -> Optional[datetime.datetime]:
+        from documents.models import db_settings
+
         if (
             date is not None
             and date.year > 1900
             and date <= timezone.now()
-            and date.date() not in settings.IGNORE_DATES
+            and date.date() not in db_settings.IGNORE_DATES
         ):
             return date
         return None
@@ -293,12 +295,14 @@ def parse_date_generator(filename, text) -> Iterator[datetime.datetime]:
             if date is not None:
                 yield date
 
+    from documents.models import db_settings
+
     # if filename date parsing is enabled, search there first:
     if settings.FILENAME_DATE_ORDER:
         yield from __process_content(filename, settings.FILENAME_DATE_ORDER)
 
     # Iterate through all regex matches in text and try to parse the date
-    yield from __process_content(text, settings.DATE_ORDER)
+    yield from __process_content(text, db_settings.DATE_ORDER)
 
 
 class ParseError(Exception):

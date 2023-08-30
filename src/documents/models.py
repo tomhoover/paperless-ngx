@@ -474,15 +474,123 @@ class SavedViewFilterRule(models.Model):
 
 
 class ConfigurationOptionManager(models.Manager):
-
     CONFIGURATION_KEYS = {
+        # "REDIS": {"type": str, "default": "redis://localhost:6379"},
+        # "REDIS_PREFIX": {"type": str, "default": ""},
+        # "DBENGINE": {"type": str, "default": "sqlite"},
+        # "DBHOST": {"type": str, "default": None},
+        # "DBPORT": {"type": int, "default": 5432},
+        # "DBNAME": {"type": str, "default": "paperless"},
+        # "DBUSER": {"type": str, "default": "paperless"},
+        # "DBPASS": {"type": str, "default": "paperless"},
+        # "DBSSLMODE": {"type": str, "default": "prefer"},
+        # "DBSSLROOTCERT": {"type": str, "default": None},
+        # "DBSSLCERT": {"type": str, "default": None},
+        # "DBSSLKEY": {"type": str, "default": None},
+        # "DB_TIMEOUT": {"type": int, "default": None},
+        # "TIKA_ENABLED": {"type": bool, "default": False},
+        # "TIKA_ENDPOINT": {"type": str, "default": "http://localhost:9998"},
+        # "TIKA_GOTENBERG_ENDPOINT": {"type": str, "default": "http://localhost:3000"},
+        # "CONSUMPTION_DIR": {"type": str, "default": "../consume/"},
+        # "DATA_DIR": {"type": str, "default": "../data/"},
+        # "TRASH_DIR": {"type": str, "default": "../media/trash"},
+        # "MEDIA_ROOT": {"type": str, "default": "../media/"},
+        # "STATICDIR": {"type": str, "default": "../static/"},
+        # "FILENAME_FORMAT": {"type": str, "default": None},
+        # "FILENAME_FORMAT_REMOVE_NONE": {"type": bool, "default": False},
+        # "LOGGING_DIR": {"type": str, "default": "PAPERLESS_DATA_DIR/log/"},
+        # "NLTK_DIR": {"type": str, "default": "/usr/share/nltk_data"},
+        # "LOGROTATE_MAX_SIZE": {"type": int, "default": 1024 * 1024},
+        # "LOGROTATE_MAX_BACKUPS": {"type": int, "default": 20},
+        # "SECRET_KEY": {
+        #     "type": str,
+        #     "default": "e11fl1oa-*ytql8p)(06fbj4ukrlo+n7k&q5+$1md7i+mge=ee",
+        # },
+        # "URL": {"type": str, "default": ""},
+        # "CSRF_TRUSTED_ORIGINS": {"type": str, "default": ""},
+        # "ALLOWED_HOSTS": {"type": str, "default": "*"},
+        # "CORS_ALLOWED_HOSTS": {"type": str, "default": "http://localhost:8000"},
+        # "TRUSTED_PROXIES": {"type": str, "default": ""},
+        # "FORCE_SCRIPT_NAME": {"type": str, "default": None},
+        # "STATIC_URL": {"type": str, "default": "/static/"},
+        # "AUTO_LOGIN_USERNAME": {"type": str, "default": None},
+        # "ADMIN_USER": {"type": str, "default": None},
+        # "ADMIN_PASSWORD": {"type": str, "default": None},
+        # "ADMIN_MAIL": {"type": str, "default": "root@localhost"},
+        # "COOKIE_PREFIX": {"type": str, "default": ""},
+        # "ENABLE_HTTP_REMOTE_USER": {"type": str, "default": False},
+        # "HTTP_REMOTE_USER_HEADER_NAME": {"type": str, "default": "HTTP_REMOTE_USER"},
+        # "LOGOUT_REDIRECT_URL": {"type": str, "default": None},
+        # "USE_X_FORWARD_HOST": {"type": bool, "default": False},
+        # "USE_X_FORWARD_PORT": {"type": bool, "default": False},
+        # "PROXY_SSL_HEADER": {"type": str, "default": None},
+        # "EMAIL_CERTIFICATE_FILE": {"type": str, "default": None},
+        "OCR_LANGUAGE": {"type": str, "default": "eng"},
         "OCR_MODE": {"type": str, "default": "skip"},
-        "OCR_ROTATE_PAGES": {"type": bool, "default": True}
+        "OCR_SKIP_ARCHIVE_FILE": {"type": str, "default": "never"},
+        "OCR_CLEAN": {"type": str, "default": "clean"},
+        "OCR_DESKEW": {"type": bool, "default": True},
+        "OCR_ROTATE_PAGES": {"type": bool, "default": True},
+        "OCR_ROTATE_PAGES_THRESHOLD": {"type": bool, "default": True},
+        "OCR_OUTPUT_TYPE": {"type": str, "default": "pdfa"},
+        "OCR_PAGES": {"type": int, "default": 0},
+        "OCR_IMAGE_DPI": {"type": int, "default": None},
+        "OCR_MAX_IMAGE_PIXELS": {"type": int, "default": None},
+        "OCR_USER_ARGS": {"type": str, "default": None},
+        # "TASK_WORKERS": {"type": int, "default": 1},
+        # "THREADS_PER_WORKER": {"type": int, "default": None},
+        # "WORKER_TIMEOUT": {"type": int, "default": 1800},
+        # "TIME_ZONE": {"type": str, "default": "UTC"},
+        # "ENABLE_NLTK": {"type": bool, "default": True},
+        # "EMAIL_TASK_CRON": {"type": str, "default": "*/10 * * * *"},
+        # "TRAIN_TASK_CRON": {"type": str, "default": "5 */1 * * *"},
+        # "INDEX_TASK_CRON": {"type": str, "default": "0 0 * * *"},
+        # "SANITY_TASK_CRON": {"type": str, "default": "30 0 * * sun"},
+        # "ENABLE_COMPRESSION": {"type": bool, "default": True},
+        # "CONVERT_MEMORY_LIMIT": {"type": int, "default": 0},
+        # "CONVERT_TMPDIR": {"type": str, "default": None},
+        # "CONSUMER_DELETE_DUPLICATES": {"type": bool, "default": False},
+        # "CONSUMER_RECURSIVE": {"type": bool, "default": False},
+        # "CONSUMER_SUBDIRS_AS_TAGS": {"type": bool, "default": False},
+        # "CONSUMER_IGNORE_PATTERNS": {
+        #     "type": str,
+        #     "default": '[".DS_Store", ".DS_STORE", "._*", ".stfolder/*", ".stversions/*", ".localized/*", "desktop.ini", "@eaDir/*"]',  # noqa: E501
+        # },
+        # "CONSUMER_BARCODE_SCANNER": {"type": str, "default": "PYZBAR"},
+        # "PRE_CONSUME_SCRIPT": {"type": str, "default": None},
+        # "POST_CONSUME_SCRIPT": {"type": str, "default": None},
+        # "FILENAME_DATE_ORDER": {"type": str, "default": None},
+        "NUMBER_OF_SUGGESTED_DATES": {"type": int, "default": 3},
+        # "THUMBNAIL_FONT_NAME": {
+        #     "type": str,
+        #     "default": "/usr/share/fonts/liberation/LiberationSerif-Regular.ttf",
+        # },
+        "IGNORE_DATES": {"type": str, "default": ""},
+        "DATE_ORDER": {"type": str, "default": "DMY"},
+        # "CONSUMER_POLLING": {"type": int, "default": 0},
+        # "CONSUMER_POLLING_RETRY_COUNT": {"type": int, "default": 5},
+        # "CONSUMER_POLLING_DELAY": {"type": int, "default": 5},
+        # "CONSUMER_INOTIFY_DELAY": {"type": float, "default": 0.5},
+        # "CONSUMER_ENABLE_BARCODES": {"type": bool, "default": False},
+        # "CONSUMER_BARCODE_TIFF_SUPPORT": {"type": bool, "default": False},
+        # "CONSUMER_BARCODE_STRING": {"type": str, "default": "PATCHT"},
+        # "CONSUMER_ENABLE_ASN_BARCODE": {"type": bool, "default": False},
+        # "CONSUMER_ASN_BARCODE_PREFIX": {"type": str, "default": "ASN"},
+        # "CONSUMER_BARCODE_UPSCALE": {"type": float, "default": 0.0},
+        # "CONSUMER_BARCODE_DPI": {"type": int, "default": 300},
+        # "CONSUMER_ENABLE_COLLATE_DOUBLE_SIDED": {"type": bool, "default": False},
+        # "CONSUMER_COLLATE_DOUBLE_SIDED_SUBDIR_NAME": {
+        #     "type": str,
+        #     "default": "double-sided",
+        # },
+        # "CONSUMER_COLLATE_DOUBLE_SIDED_TIFF_SUPPORT": {"type": bool, "default": False}, # noqa: E501
+        # "CONVERT_BINARY": {"type": str, "default": "convert"},
+        # "GS_BINARY": {"type": str, "default": "gs"},
     }
 
     def __getattr__(self, item):
-        if not item in self.CONFIGURATION_KEYS:
-            raise AttributeError()
+        if item not in self.CONFIGURATION_KEYS:
+            raise AttributeError
 
         query = self.filter(key=item)
         if query.exists() and query.first().value:
@@ -493,31 +601,29 @@ class ConfigurationOptionManager(models.Manager):
     def set_config(self, key, value):
         if key in self.CONFIGURATION_KEYS:
             if not type(value) == self.CONFIGURATION_KEYS[key]["type"]:
-                raise TypeError()
+                raise TypeError
 
             self.filter(key=key).update(value=value)
         else:
-            raise KeyError()
+            raise KeyError
 
     def _get_default(self, key):
         if f"PAPERLESS_{key}" in os.environ:
             return os.environ[f"PAPERLESS_{key}"]
         elif "default" in self.CONFIGURATION_KEYS[key]:
-            return self.CONFIGURATION_KEYS[key]['default']
+            return self.CONFIGURATION_KEYS[key]["default"]
         else:
             return None
 
 
 class ConfigurationOption(models.Model):
+    key = models.CharField(max_length=128, unique=True)
+    value = models.CharField(blank=True, max_length=1024, null=True)
 
     objects = ConfigurationOptionManager()
 
-    key = models.CharField(
-        max_length=128, unique=True)
-
-    value = models.CharField(
-        max_length=1024, blank=True, null=True
-    )
+    def __str__(self):
+        return self.key
 
 
 db_settings = ConfigurationOption.objects

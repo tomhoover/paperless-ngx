@@ -1,6 +1,7 @@
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 
+from .models import ConfigurationOption
 from .models import Correspondent
 from .models import Document
 from .models import DocumentType
@@ -132,6 +133,11 @@ class NotesAdmin(GuardedModelAdmin):
     list_display_links = ("created",)
 
 
+class ConfigurationOptionAdmin(GuardedModelAdmin):
+    list_display = ("key", "value")
+    list_filter = ["key"]
+
+
 admin.site.register(Correspondent, CorrespondentAdmin)
 admin.site.register(Tag, TagAdmin)
 admin.site.register(DocumentType, DocumentTypeAdmin)
@@ -140,3 +146,4 @@ admin.site.register(SavedView, SavedViewAdmin)
 admin.site.register(StoragePath, StoragePathAdmin)
 admin.site.register(PaperlessTask, TaskAdmin)
 admin.site.register(Note, NotesAdmin)
+admin.site.register(ConfigurationOption, ConfigurationOptionAdmin)
