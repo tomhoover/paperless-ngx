@@ -37,7 +37,7 @@ class ModelWithOwner(models.Model):
         abstract = True
 
 
-class MatchingModel(ModelWithOwner):
+class MatchingModel(models.Model):
     MATCH_NONE = 0
     MATCH_ANY = 1
     MATCH_ALL = 2
@@ -87,13 +87,13 @@ class MatchingModel(ModelWithOwner):
         return self.name
 
 
-class Correspondent(MatchingModel):
+class Correspondent(ModelWithOwner, MatchingModel):
     class Meta(MatchingModel.Meta):
         verbose_name = _("correspondent")
         verbose_name_plural = _("correspondents")
 
 
-class Tag(MatchingModel):
+class Tag(ModelWithOwner, MatchingModel):
     color = models.CharField(_("color"), max_length=7, default="#a6cee3")
 
     is_inbox_tag = models.BooleanField(
@@ -110,13 +110,13 @@ class Tag(MatchingModel):
         verbose_name_plural = _("tags")
 
 
-class DocumentType(MatchingModel):
+class DocumentType(ModelWithOwner, MatchingModel):
     class Meta(MatchingModel.Meta):
         verbose_name = _("document type")
         verbose_name_plural = _("document types")
 
 
-class StoragePath(MatchingModel):
+class StoragePath(ModelWithOwner, MatchingModel):
     path = models.CharField(
         _("path"),
         max_length=512,
@@ -740,7 +740,7 @@ class ShareLink(models.Model):
         return f"Share Link for {self.document.title}"
 
 
-class ConsumptionTemplate(models.Model):
+class ConsumptionTemplate(MatchingModel):
     class DocumentSourceChoices(models.IntegerChoices):
         CONSUME_FOLDER = DocumentSource.ConsumeFolder.value, _("Consume Folder")
         API_UPLOAD = DocumentSource.ApiUpload.value, _("Api Upload")
@@ -786,6 +786,15 @@ class ConsumptionTemplate(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         verbose_name=_("filter documents from this mail rule"),
+    )
+
+    matching_algorithm = models.PositiveIntegerField(
+        _("matching algorithm"),
+        choices=filter(
+            lambda a: a[0] != MatchingModel.MATCH_AUTO,
+            MatchingModel.MATCHING_ALGORITHMS,
+        ),
+        default=MatchingModel.MATCH_NONE,
     )
 
     assign_title = models.CharField(

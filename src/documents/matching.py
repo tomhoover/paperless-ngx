@@ -297,5 +297,12 @@ def document_matches_template(
         )
         return False
 
+    # Document matching algo
+    if template.match is not None and not matches(template, document):
+        log_match_failure(
+            f"Document does not match matching filter {template.match}",
+        )
+        return False
+
     logger.info(f"Document matched template {template.name}")
     return True

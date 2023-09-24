@@ -1,4 +1,4 @@
-import { ObjectWithId } from './object-with-id'
+import { MatchingModel } from './matching-model'
 
 export enum DocumentSource {
   ConsumeFolder = 1,
@@ -6,7 +6,7 @@ export enum DocumentSource {
   MailFetch = 3,
 }
 
-export interface PaperlessConsumptionTemplate extends ObjectWithId {
+export interface PaperlessConsumptionTemplate extends MatchingModel {
   name: string
 
   order: number

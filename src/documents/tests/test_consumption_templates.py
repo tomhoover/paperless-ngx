@@ -12,6 +12,7 @@ from documents.data_models import DocumentSource
 from documents.models import ConsumptionTemplate
 from documents.models import Correspondent
 from documents.models import DocumentType
+from documents.models import MatchingModel
 from documents.models import StoragePath
 from documents.models import Tag
 from documents.tests.utils import DirectoriesMixin
@@ -473,4 +474,56 @@ class TestConsumptionTemplates(DirectoriesMixin, FileSystemAssertsMixin, TestCas
         expected_str = f"Document did not match template {ct}"
         self.assertIn(expected_str, cm.output[0])
         expected_str = f"Document source {DocumentSource.ApiUpload.name} not in ['{DocumentSource.ConsumeFolder.name}', '{DocumentSource.MailFetch.name}']"
+        self.assertIn(expected_str, cm.output[1])
+
+    @mock.patch("documents.consumer.Consumer.try_consume_file")
+    def test_consumption_template_no_match_matching_algorithm(self, m):
+        """
+        GIVEN:
+            - Existing consumption template
+        WHEN:
+            - File that does not match on matching algorithm is consumed
+        THEN:
+            - Template overrides are not applied
+        """
+        ct = ConsumptionTemplate.objects.create(
+            name="Template 1",
+            order=0,
+            sources=f"{DocumentSource.ApiUpload}",
+            matching_algorithm=MatchingModel.MATCH_LITERAL,
+            match="foo",
+            assign_title="Doc from {correspondent}",
+            assign_correspondent=self.c,
+            assign_document_type=self.dt,
+            assign_storage_path=self.sp,
+            assign_owner=self.user2,
+        )
+
+        test_file = self.SAMPLE_DIR / "simple.pdf"
+
+        with mock.patch("documents.tasks.async_to_sync"):
+            with self.assertLogs("paperless.matching", level="DEBUG") as cm:
+                tasks.consume_file(
+                    ConsumableDocument(
+                        source=DocumentSource.ApiUpload,
+                        original_file=test_file,
+                    ),
+                    None,
+                )
+                m.assert_called_once()
+                _, overrides = m.call_args
+                self.assertIsNone(overrides["override_correspondent_id"])
+                self.assertIsNone(overrides["override_document_type_id"])
+                self.assertIsNone(overrides["override_tag_ids"])
+                self.assertIsNone(overrides["override_storage_path_id"])
+                self.assertIsNone(overrides["override_owner_id"])
+                self.assertIsNone(overrides["override_view_users"])
+                self.assertIsNone(overrides["override_view_groups"])
+                self.assertIsNone(overrides["override_change_users"])
+                self.assertIsNone(overrides["override_change_groups"])
+                self.assertIsNone(overrides["override_title"])
+
+        expected_str = f"Document did not match template {ct}"
+        self.assertIn(expected_str, cm.output[0])
+        expected_str = f"Document does not match matching filter {ct.match}"
         self.assertIn(expected_str, cm.output[1])

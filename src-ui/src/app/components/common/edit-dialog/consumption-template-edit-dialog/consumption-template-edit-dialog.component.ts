@@ -18,6 +18,11 @@ import { SettingsService } from 'src/app/services/settings.service'
 import { EditDialogComponent } from '../edit-dialog.component'
 import { MailRuleService } from 'src/app/services/rest/mail-rule.service'
 import { PaperlessMailRule } from 'src/app/data/paperless-mail-rule'
+import {
+  MATCHING_ALGORITHMS,
+  MATCH_AUTO,
+  MATCH_NONE,
+} from 'src/app/data/matching-model'
 
 export const DOCUMENT_SOURCE_OPTIONS = [
   {
@@ -94,6 +99,9 @@ export class ConsumptionTemplateEditDialogComponent extends EditDialogComponent<
       filter_filename: new FormControl(null),
       filter_path: new FormControl(null),
       filter_mailrule: new FormControl(null),
+      matching_algorithm: new FormControl(MATCH_NONE),
+      match: new FormControl(null),
+      is_insensitive: new FormControl(true),
       order: new FormControl(null),
       sources: new FormControl([]),
       assign_title: new FormControl(null),
@@ -111,5 +119,16 @@ export class ConsumptionTemplateEditDialogComponent extends EditDialogComponent<
 
   get sourceOptions() {
     return DOCUMENT_SOURCE_OPTIONS
+  }
+
+  getMatchingAlgorithms() {
+    return MATCHING_ALGORITHMS.filter((a) => a.id !== MATCH_AUTO)
+  }
+
+  get patternRequired(): boolean {
+    return (
+      this.objectForm?.value.matching_algorithm !== MATCH_AUTO &&
+      this.objectForm?.value.matching_algorithm !== MATCH_NONE
+    )
   }
 }

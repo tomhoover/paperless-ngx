@@ -1039,7 +1039,7 @@ class BulkEditObjectPermissionsSerializer(serializers.Serializer, SetPermissions
         return attrs
 
 
-class ConsumptionTemplateSerializer(serializers.ModelSerializer):
+class ConsumptionTemplateSerializer(MatchingModelSerializer):
     order = serializers.IntegerField(required=False)
     sources = fields.MultipleChoiceField(
         choices=ConsumptionTemplate.DocumentSourceChoices.choices,
@@ -1065,6 +1065,9 @@ class ConsumptionTemplateSerializer(serializers.ModelSerializer):
             "filter_path",
             "filter_filename",
             "filter_mailrule",
+            "match",
+            "matching_algorithm",
+            "is_insensitive",
             "assign_title",
             "assign_tags",
             "assign_correspondent",
