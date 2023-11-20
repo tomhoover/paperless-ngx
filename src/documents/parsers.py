@@ -319,10 +319,12 @@ class DocumentParser(LoggingMixin):
         super().__init__()
         self.logging_group = logging_group
         os.makedirs(settings.SCRATCH_DIR, exist_ok=True)
-        self.tempdir = tempfile.mkdtemp(prefix="paperless-", dir=settings.SCRATCH_DIR)
+        self.tempdir = Path(
+            tempfile.mkdtemp(prefix="paperless-", dir=settings.SCRATCH_DIR),
+        )
 
-        self.archive_path = None
-        self.text = None
+        self.archive_path: Optional[Path] = None
+        self.text: Optional[str] = None
         self.date: Optional[datetime.datetime] = None
         self.progress_callback = progress_callback
 
@@ -342,16 +344,21 @@ class DocumentParser(LoggingMixin):
             text = filepath.read_bytes().decode("utf-8", errors="replace")
         return text
 
-    def extract_metadata(self, document_path, mime_type):
+    def extract_metadata(self, document_path, mime_type: str):
         return []
 
-    def parse(self, document_path, mime_type, file_name=None):
+    def parse(self, document_path, mime_type: str, file_name=None):
         raise NotImplementedError
 
     def get_archive_path(self):
         return self.archive_path
 
-    def get_thumbnail(self, document_path, mime_type, file_name=None):
+    def get_thumbnail(
+        self,
+        document_path,
+        mime_type: str,
+        file_name: Optional[str] = None,
+    ):
         """
         Returns the path to a file we can use as a thumbnail for this document.
         """
