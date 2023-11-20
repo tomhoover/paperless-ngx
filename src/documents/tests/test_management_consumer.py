@@ -1,5 +1,4 @@
 import filecmp
-import os
 import shutil
 from pathlib import Path
 from threading import Thread
@@ -116,7 +115,7 @@ class TestConsumer(DirectoriesMixin, ConsumerThreadMixin, TransactionTestCase):
     def test_consume_file(self):
         self.t_start()
 
-        f = Path(os.path.join(self.dirs.consumption_dir, "my_file.pdf"))
+        f = self.dirs.consumption_dir / "my_file.pdf"
         shutil.copy(self.sample_file, f)
 
         self.wait_for_task_mock_call()
@@ -130,7 +129,7 @@ class TestConsumer(DirectoriesMixin, ConsumerThreadMixin, TransactionTestCase):
     def test_consume_file_invalid_ext(self):
         self.t_start()
 
-        f = os.path.join(self.dirs.consumption_dir, "my_file.wow")
+        f = self.dirs.consumption_dir / "my_file.wow"
         shutil.copy(self.sample_file, f)
 
         self.wait_for_task_mock_call()
@@ -138,7 +137,7 @@ class TestConsumer(DirectoriesMixin, ConsumerThreadMixin, TransactionTestCase):
         self.consume_file_mock.assert_not_called()
 
     def test_consume_existing_file(self):
-        f = Path(os.path.join(self.dirs.consumption_dir, "my_file.pdf"))
+        f = self.dirs.consumption_dir / "my_file.pdf"
         shutil.copy(self.sample_file, f)
 
         self.t_start()
@@ -154,7 +153,7 @@ class TestConsumer(DirectoriesMixin, ConsumerThreadMixin, TransactionTestCase):
 
         self.t_start()
 
-        fname = Path(os.path.join(self.dirs.consumption_dir, "my_file.pdf"))
+        fname = self.dirs.consumption_dir / "my_file.pdf"
 
         self.slow_write_file(fname)
 
@@ -174,8 +173,8 @@ class TestConsumer(DirectoriesMixin, ConsumerThreadMixin, TransactionTestCase):
 
         self.t_start()
 
-        fname = Path(os.path.join(self.dirs.consumption_dir, "my_file.~df"))
-        fname2 = Path(os.path.join(self.dirs.consumption_dir, "my_file.pdf"))
+        fname = self.dirs.consumption_dir / "my_file.~df"
+        fname2 = self.dirs.consumption_dir / "my_file.pdf"
 
         self.slow_write_file(fname)
         shutil.move(fname, fname2)
@@ -196,7 +195,7 @@ class TestConsumer(DirectoriesMixin, ConsumerThreadMixin, TransactionTestCase):
 
         self.t_start()
 
-        fname = Path(os.path.join(self.dirs.consumption_dir, "my_file.pdf"))
+        fname = self.dirs.consumption_dir / "my_file.pdf"
         self.slow_write_file(fname, incomplete=True)
 
         self.wait_for_task_mock_call()
@@ -225,23 +224,23 @@ class TestConsumer(DirectoriesMixin, ConsumerThreadMixin, TransactionTestCase):
 
         shutil.copy(
             self.sample_file,
-            os.path.join(self.dirs.consumption_dir, ".DS_STORE"),
+            self.dirs.consumption_dir / ".DS_STORE",
         )
         shutil.copy(
             self.sample_file,
-            os.path.join(self.dirs.consumption_dir, "my_file.pdf"),
+            self.dirs.consumption_dir / "my_file.pdf",
         )
         shutil.copy(
             self.sample_file,
-            os.path.join(self.dirs.consumption_dir, "._my_file.pdf"),
+            self.dirs.consumption_dir / "._my_file.pdf",
         )
         shutil.copy(
             self.sample_file,
-            os.path.join(self.dirs.consumption_dir, "my_second_file.pdf"),
+            self.dirs.consumption_dir / "my_second_file.pdf",
         )
         shutil.copy(
             self.sample_file,
-            os.path.join(self.dirs.consumption_dir, "._my_second_file.pdf"),
+            self.dirs.consumption_dir / "._my_second_file.pdf",
         )
 
         sleep(5)
@@ -259,60 +258,54 @@ class TestConsumer(DirectoriesMixin, ConsumerThreadMixin, TransactionTestCase):
     def test_is_ignored(self):
         test_paths = [
             {
-                "path": os.path.join(self.dirs.consumption_dir, "foo.pdf"),
+                "path": self.dirs.consumption_dir / "foo.pdf",
                 "ignore": False,
             },
             {
-                "path": os.path.join(self.dirs.consumption_dir, "foo", "bar.pdf"),
+                "path": self.dirs.consumption_dir / "foo" / "bar.pdf",
                 "ignore": False,
             },
             {
-                "path": os.path.join(self.dirs.consumption_dir, ".DS_STORE"),
+                "path": self.dirs.consumption_dir / ".DS_STORE",
                 "ignore": True,
             },
             {
-                "path": os.path.join(self.dirs.consumption_dir, ".DS_Store"),
+                "path": self.dirs.consumption_dir / ".DS_Store",
                 "ignore": True,
             },
             {
-                "path": os.path.join(self.dirs.consumption_dir, ".stfolder", "foo.pdf"),
+                "path": self.dirs.consumption_dir / ".stfolder" / "foo.pdf",
                 "ignore": True,
             },
             {
-                "path": os.path.join(self.dirs.consumption_dir, ".stfolder.pdf"),
+                "path": self.dirs.consumption_dir / ".stfolder.pdf",
                 "ignore": False,
             },
             {
-                "path": os.path.join(
-                    self.dirs.consumption_dir,
-                    ".stversions",
-                    "foo.pdf",
-                ),
+                "path": self.dirs.consumption_dir / ".stversions" / "foo.pdf",
                 "ignore": True,
             },
             {
-                "path": os.path.join(self.dirs.consumption_dir, ".stversions.pdf"),
+                "path": self.dirs.consumption_dir / ".stversions.pdf",
                 "ignore": False,
             },
             {
-                "path": os.path.join(self.dirs.consumption_dir, "._foo.pdf"),
+                "path": self.dirs.consumption_dir / "._foo.pdf",
                 "ignore": True,
             },
             {
-                "path": os.path.join(self.dirs.consumption_dir, "my_foo.pdf"),
+                "path": self.dirs.consumption_dir / "my_foo.pdf",
                 "ignore": False,
             },
             {
-                "path": os.path.join(self.dirs.consumption_dir, "._foo", "bar.pdf"),
+                "path": self.dirs.consumption_dir / "._foo" / "bar.pdf",
                 "ignore": True,
             },
             {
-                "path": os.path.join(
-                    self.dirs.consumption_dir,
-                    "@eaDir",
-                    "SYNO@.fileindexdb",
-                    "_1jk.fnm",
-                ),
+                "path": self.dirs.consumption_dir
+                / "@eaDir"
+                / "SYNO@.fileindexdb"
+                / "_1jk.fnm",
                 "ignore": True,
             },
         ]
@@ -332,7 +325,7 @@ class TestConsumer(DirectoriesMixin, ConsumerThreadMixin, TransactionTestCase):
 
         self.t_start()
 
-        f = os.path.join(self.dirs.consumption_dir, "my_file.pdf")
+        f = self.dirs.consumption_dir / "my_file.pdf"
         shutil.copy(self.sample_file, f)
 
         self.wait_for_task_mock_call()
@@ -380,9 +373,9 @@ class TestConsumerTags(DirectoriesMixin, ConsumerThreadMixin, TransactionTestCas
 
         self.t_start()
 
-        path = os.path.join(self.dirs.consumption_dir, *tag_names)
-        os.makedirs(path, exist_ok=True)
-        f = Path(os.path.join(path, "my_file.pdf"))
+        path = self.dirs.consumption_dir / "existingTag" / "Space Tag"
+        path.mkdir(exist_ok=True, parents=True)
+        f = path / "my_file.pdf"
         # Wait at least inotify read_delay for recursive watchers
         # to be created for the new directories
         sleep(1)

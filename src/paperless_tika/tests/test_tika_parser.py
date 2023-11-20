@@ -1,5 +1,4 @@
 import datetime
-import os
 import zoneinfo
 from pathlib import Path
 
@@ -35,7 +34,7 @@ class TestTikaParser(HttpxMockMixin, TestCase):
         # Pretend convert to PDF response
         self.httpx_mock.add_response(content=b"PDF document")
 
-        file = Path(os.path.join(self.parser.tempdir, "input.odt"))
+        file = Path(self.parser.tempdir) / "input.odt"
         file.touch()
 
         self.parser.parse(file, "application/vnd.oasis.opendocument.text")
@@ -65,7 +64,7 @@ class TestTikaParser(HttpxMockMixin, TestCase):
             },
         )
 
-        file = Path(os.path.join(self.parser.tempdir, "input.odt"))
+        file = Path(self.parser.tempdir) / "input.odt"
         file.touch()
 
         metadata = self.parser.extract_metadata(
@@ -88,7 +87,7 @@ class TestTikaParser(HttpxMockMixin, TestCase):
         # Pretend convert to PDF response
         self.httpx_mock.add_response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        file = Path(os.path.join(self.parser.tempdir, "input.odt"))
+        file = Path(self.parser.tempdir) / "input.odt"
         file.touch()
 
         with self.assertRaises(ParseError):
@@ -103,7 +102,7 @@ class TestTikaParser(HttpxMockMixin, TestCase):
         THEN:
             - Request to Gotenberg contains the expected PDF/A format string
         """
-        file = Path(os.path.join(self.parser.tempdir, "input.odt"))
+        file = Path(self.parser.tempdir) / "input.odt"
         file.touch()
 
         for setting, expected_key in [

@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from zipfile import ZipFile
 
 from documents.models import Document
@@ -16,7 +16,7 @@ class BulkArchiveStrategy:
         self,
         doc: Document,
         archive: bool = False,
-        folder: str = "",
+        folder: Path = Path("."),
     ):
         """
         Constructs a unique name for the given document to be used inside the
@@ -26,8 +26,8 @@ class BulkArchiveStrategy:
         """
         counter = 0
         while True:
-            filename = folder + doc.get_public_filename(archive, counter)
-            if filename in self.zipf.namelist():
+            filename = folder / doc.get_public_filename(archive, counter)
+            if str(filename) in self.zipf.namelist():
                 counter += 1
             else:
                 return filename
@@ -36,7 +36,7 @@ class BulkArchiveStrategy:
         self,
         doc: Document,
         archive: bool = False,
-        folder: str = "",
+        folder: Path = Path("."),
     ):
         """
         Constructs a full file path for the given document to be used inside
@@ -45,9 +45,9 @@ class BulkArchiveStrategy:
         The path is already unique, as handled when a document is consumed or updated
         """
         if archive and doc.has_archive_version:
-            in_archive_path = os.path.join(folder, doc.archive_filename)
+            in_archive_path = folder / doc.archive_filename
         else:
-            in_archive_path = os.path.join(folder, doc.filename)
+            in_archive_path = folder / doc.filename
 
         return in_archive_path
 
@@ -76,10 +76,10 @@ class OriginalAndArchiveStrategy(BulkArchiveStrategy):
         if doc.has_archive_version:
             self.zipf.write(
                 doc.archive_path,
-                self.make_unique_filename(doc, archive=True, folder="archive/"),
+                self.make_unique_filename(doc, archive=True, folder=Path("archive/")),
             )
 
         self.zipf.write(
             doc.source_path,
-            self.make_unique_filename(doc, folder="originals/"),
+            self.make_unique_filename(doc, folder=Path("originals/")),
         )

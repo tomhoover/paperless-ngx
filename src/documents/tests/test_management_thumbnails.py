@@ -1,5 +1,5 @@
-import os
 import shutil
+from pathlib import Path
 from unittest import mock
 
 from django.core.management import call_command
@@ -13,6 +13,8 @@ from documents.tests.utils import FileSystemAssertsMixin
 
 
 class TestMakeThumbnails(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
+    SAMPLE_DIR = Path(__file__).parent.resolve() / "samples"
+
     def make_models(self):
         self.d1 = Document.objects.create(
             checksum="A",
@@ -21,10 +23,7 @@ class TestMakeThumbnails(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
             mime_type="application/pdf",
             filename="test.pdf",
         )
-        shutil.copy(
-            os.path.join(os.path.dirname(__file__), "samples", "simple.pdf"),
-            self.d1.source_path,
-        )
+        shutil.copy(self.SAMPLE_DIR / "simple.pdf", self.d1.source_path)
 
         self.d2 = Document.objects.create(
             checksum="B",
@@ -33,10 +32,7 @@ class TestMakeThumbnails(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
             mime_type="application/pdf",
             filename="test2.pdf",
         )
-        shutil.copy(
-            os.path.join(os.path.dirname(__file__), "samples", "simple.pdf"),
-            self.d2.source_path,
-        )
+        shutil.copy(self.SAMPLE_DIR / "simple.pdf", self.d2.source_path)
 
         self.d3 = Document.objects.create(
             checksum="C",
@@ -45,10 +41,7 @@ class TestMakeThumbnails(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
             mime_type="application/pdf",
             filename="test3.pdf",
         )
-        shutil.copy(
-            os.path.join(os.path.dirname(__file__), "samples", "password-is-test.pdf"),
-            self.d3.source_path,
-        )
+        shutil.copy(self.SAMPLE_DIR / "password-is-test.pdf", self.d3.source_path)
 
     def setUp(self) -> None:
         super().setUp()

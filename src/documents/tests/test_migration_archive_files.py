@@ -31,12 +31,12 @@ def archive_path_old(self):
     else:
         fname = f"{self.pk:07}.pdf"
 
-    return os.path.join(settings.ARCHIVE_DIR, fname)
+    return settings.ARCHIVE_DIR / fname
 
 
 def archive_path_new(doc):
     if doc.archive_filename is not None:
-        return os.path.join(settings.ARCHIVE_DIR, str(doc.archive_filename))
+        return settings.ARCHIVE_DIR / str(doc.archive_filename)
     else:
         return None
 
@@ -49,7 +49,7 @@ def source_path(doc):
         if doc.storage_type == STORAGE_TYPE_GPG:
             fname += ".gpg"  # pragma: no cover
 
-    return os.path.join(settings.ORIGINALS_DIR, fname)
+    return settings.ORIGINALS_DIR / fname
 
 
 def thumbnail_path(doc):
@@ -57,7 +57,7 @@ def thumbnail_path(doc):
     if doc.storage_type == STORAGE_TYPE_GPG:
         file_name += ".gpg"
 
-    return os.path.join(settings.THUMBNAIL_DIR, file_name)
+    return settings.THUMBNAIL_DIR / file_name
 
 
 def make_test_document(
@@ -97,25 +97,14 @@ def make_test_document(
     return doc
 
 
-simple_jpg = os.path.join(os.path.dirname(__file__), "samples", "simple.jpg")
-simple_pdf = os.path.join(os.path.dirname(__file__), "samples", "simple.pdf")
-simple_pdf2 = os.path.join(
-    os.path.dirname(__file__),
-    "samples",
-    "documents",
-    "originals",
-    "0000002.pdf",
-)
-simple_pdf3 = os.path.join(
-    os.path.dirname(__file__),
-    "samples",
-    "documents",
-    "originals",
-    "0000003.pdf",
-)
-simple_txt = os.path.join(os.path.dirname(__file__), "samples", "simple.txt")
-simple_png = os.path.join(os.path.dirname(__file__), "samples", "simple-noalpha.png")
-simple_png2 = os.path.join(os.path.dirname(__file__), "examples", "no-text.png")
+sample_dir = Path(__file__).parent / "samples"
+simple_jpg = sample_dir / "simple.jpg"
+simple_pdf = sample_dir / "simple.pdf"
+simple_pdf2 = sample_dir / "documents" / "originals" / "0000002.pdf"
+simple_pdf3 = sample_dir / "documents" / "originals" / "0000003.pdf"
+simple_txt = sample_dir / "simple.txt"
+simple_png = sample_dir / "simple-noalpha.png"
+simple_png2 = Path(__file__).parent / "examples" / "no-text.png"
 
 
 @override_settings(FILENAME_FORMAT="")

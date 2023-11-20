@@ -1,4 +1,3 @@
-import os
 import re
 from pathlib import Path
 from unittest import mock
@@ -19,6 +18,7 @@ from documents.models import MatchingModel
 from documents.models import StoragePath
 from documents.models import Tag
 from documents.tests.utils import DirectoriesMixin
+from documents.tests.utils import FileSystemAssertsMixin
 
 
 def dummy_preprocess(content: str):
@@ -30,7 +30,7 @@ def dummy_preprocess(content: str):
     return content
 
 
-class TestClassifier(DirectoriesMixin, TestCase):
+class TestClassifier(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.classifier = DocumentClassifier()
@@ -616,7 +616,7 @@ class TestClassifier(DirectoriesMixin, TestCase):
         self.assertListEqual(self.classifier.predict_tags(doc2.content), [])
 
     def test_load_classifier_not_exists(self):
-        self.assertFalse(os.path.exists(settings.MODEL_FILE))
+        self.assertIsNotFile(settings.MODEL_FILE)
         self.assertIsNone(load_classifier())
 
     @mock.patch("documents.classifier.DocumentClassifier.load")
@@ -631,7 +631,7 @@ class TestClassifier(DirectoriesMixin, TestCase):
         },
     )
     @override_settings(
-        MODEL_FILE=os.path.join(os.path.dirname(__file__), "data", "model.pickle"),
+        MODEL_FILE=Path(__file__).parent.resolve() / "data" / "model.pickle",
     )
     @pytest.mark.skip(
         reason="Disabled caching due to high memory usage - need to investigate.",
@@ -647,17 +647,17 @@ class TestClassifier(DirectoriesMixin, TestCase):
     @mock.patch("documents.classifier.DocumentClassifier.load")
     def test_load_classifier_incompatible_version(self, load):
         Path(settings.MODEL_FILE).touch()
-        self.assertTrue(os.path.exists(settings.MODEL_FILE))
+        self.assertIsFile(settings.MODEL_FILE)
 
         load.side_effect = IncompatibleClassifierVersionError()
         self.assertIsNone(load_classifier())
-        self.assertFalse(os.path.exists(settings.MODEL_FILE))
+        self.assertIsNotFile(settings.MODEL_FILE)
 
     @mock.patch("documents.classifier.DocumentClassifier.load")
     def test_load_classifier_os_error(self, load):
         Path(settings.MODEL_FILE).touch()
-        self.assertTrue(os.path.exists(settings.MODEL_FILE))
+        self.assertIsFile(settings.MODEL_FILE)
 
         load.side_effect = OSError()
         self.assertIsNone(load_classifier())
-        self.assertTrue(os.path.exists(settings.MODEL_FILE))
+        self.assertIsFile(settings.MODEL_FILE)

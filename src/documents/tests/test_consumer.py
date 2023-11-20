@@ -6,6 +6,7 @@ import stat
 import tempfile
 import uuid
 import zoneinfo
+from pathlib import Path
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -239,6 +240,8 @@ def fake_magic_from_file(file, mime=False):
 
 @mock.patch("documents.consumer.magic.from_file", fake_magic_from_file)
 class TestConsumer(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
+    SAMPLE_DIR = Path(__file__).parent.resolve() / "samples"
+
     def _assert_first_last_send_progress(
         self,
         first_status=ConsumerFilePhase.STARTED,
@@ -303,28 +306,18 @@ class TestConsumer(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
 
         self.consumer = Consumer()
 
-    def get_test_file(self):
-        src = os.path.join(
-            os.path.dirname(__file__),
-            "samples",
-            "documents",
-            "originals",
-            "0000001.pdf",
+    def get_test_file(self) -> Path:
+        dst = shutil.copy(
+            self.SAMPLE_DIR / "documents" / "originals" / "0000001.pdf",
+            self.dirs.scratch_dir / "sample.pdf",
         )
-        dst = os.path.join(self.dirs.scratch_dir, "sample.pdf")
-        shutil.copy(src, dst)
         return dst
 
-    def get_test_archive_file(self):
-        src = os.path.join(
-            os.path.dirname(__file__),
-            "samples",
-            "documents",
-            "archive",
-            "0000001.pdf",
+    def get_test_archive_file(self) -> Path:
+        dst = shutil.copy(
+            self.SAMPLE_DIR / "documents" / "archive" / "0000001.pdf",
+            self.dirs.scratch_dir / "sample_archive.pdf",
         )
-        dst = os.path.join(self.dirs.scratch_dir, "sample_archive.pdf")
-        shutil.copy(src, dst)
         return dst
 
     @override_settings(FILENAME_FORMAT=None, TIME_ZONE="America/Chicago")
@@ -341,7 +334,7 @@ class TestConsumer(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
         self.assertEqual(document.content, "The Text")
         self.assertEqual(
             document.title,
-            os.path.splitext(os.path.basename(filename))[0],
+            filename.with_suffix("").name,
         )
         self.assertIsNone(document.correspondent)
         self.assertIsNone(document.document_type)
@@ -381,7 +374,7 @@ class TestConsumer(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
         # https://github.com/jonaswinkler/paperless-ng/discussions/1037
 
         filename = self.get_test_file()
-        shadow_file = os.path.join(self.dirs.scratch_dir, "._sample.pdf")
+        shadow_file = self.dirs.scratch_dir / "._sample.pdf"
 
         shutil.copy(filename, shadow_file)
 
@@ -745,16 +738,16 @@ class TestConsumer(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
     @mock.patch("documents.parsers.document_consumer_declaration.send")
     def test_similar_filenames(self, m):
         shutil.copy(
-            os.path.join(os.path.dirname(__file__), "samples", "simple.pdf"),
-            os.path.join(settings.CONSUMPTION_DIR, "simple.pdf"),
+            self.SAMPLE_DIR / "simple.pdf",
+            settings.CONSUMPTION_DIR / "simple.pdf",
         )
         shutil.copy(
-            os.path.join(os.path.dirname(__file__), "samples", "simple.png"),
-            os.path.join(settings.CONSUMPTION_DIR, "simple.png"),
+            self.SAMPLE_DIR / "simple.png",
+            settings.CONSUMPTION_DIR / "simple.png",
         )
         shutil.copy(
-            os.path.join(os.path.dirname(__file__), "samples", "simple-noalpha.png"),
-            os.path.join(settings.CONSUMPTION_DIR, "simple.png.pdf"),
+            self.SAMPLE_DIR / "simple-noalpha.png",
+            settings.CONSUMPTION_DIR / "simple.png.pdf",
         )
         m.return_value = [
             (
@@ -767,13 +760,13 @@ class TestConsumer(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
             ),
         ]
         doc1 = self.consumer.try_consume_file(
-            os.path.join(settings.CONSUMPTION_DIR, "simple.png"),
+            settings.CONSUMPTION_DIR / "simple.png",
         )
         doc2 = self.consumer.try_consume_file(
-            os.path.join(settings.CONSUMPTION_DIR, "simple.pdf"),
+            settings.CONSUMPTION_DIR / "simple.pdf",
         )
         doc3 = self.consumer.try_consume_file(
-            os.path.join(settings.CONSUMPTION_DIR, "simple.png.pdf"),
+            settings.CONSUMPTION_DIR / "simple.png.pdf",
         )
 
         self.assertEqual(doc1.filename, "simple.png")
@@ -788,6 +781,8 @@ class TestConsumer(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
 
 @mock.patch("documents.consumer.magic.from_file", fake_magic_from_file)
 class TestConsumerCreatedDate(DirectoriesMixin, TestCase):
+    SAMPLE_DIR = Path(__file__).parent.resolve() / "samples"
+
     def setUp(self):
         super().setUp()
 
@@ -806,15 +801,10 @@ class TestConsumerCreatedDate(DirectoriesMixin, TestCase):
         THEN:
             - Should parse the date from the file content
         """
-        src = os.path.join(
-            os.path.dirname(__file__),
-            "samples",
-            "documents",
-            "originals",
-            "0000005.pdf",
+        dst = shutil.copy(
+            self.SAMPLE_DIR / "documents" / "originals" / "0000005.pdf",
+            self.dirs.scratch_dir / "sample.pdf",
         )
-        dst = os.path.join(self.dirs.scratch_dir, "sample.pdf")
-        shutil.copy(src, dst)
 
         document = self.consumer.try_consume_file(dst)
 
@@ -833,15 +823,10 @@ class TestConsumerCreatedDate(DirectoriesMixin, TestCase):
         THEN:
             - Should parse the date from the filename
         """
-        src = os.path.join(
-            os.path.dirname(__file__),
-            "samples",
-            "documents",
-            "originals",
-            "0000005.pdf",
+        dst = shutil.copy(
+            self.SAMPLE_DIR / "documents" / "originals" / "0000005.pdf",
+            self.dirs.scratch_dir / "Scan - 2022-02-01.pdf",
         )
-        dst = os.path.join(self.dirs.scratch_dir, "Scan - 2022-02-01.pdf")
-        shutil.copy(src, dst)
 
         document = self.consumer.try_consume_file(dst)
 
@@ -860,15 +845,10 @@ class TestConsumerCreatedDate(DirectoriesMixin, TestCase):
         THEN:
             - Should parse the date from the content
         """
-        src = os.path.join(
-            os.path.dirname(__file__),
-            "samples",
-            "documents",
-            "originals",
-            "0000005.pdf",
+        dst = shutil.copy(
+            self.SAMPLE_DIR / "documents" / "originals" / "0000005.pdf",
+            self.dirs.scratch_dir / "Scan - 2022-02-01.pdf",
         )
-        dst = os.path.join(self.dirs.scratch_dir, "Scan - 2022-02-01.pdf")
-        shutil.copy(src, dst)
 
         document = self.consumer.try_consume_file(dst)
 
@@ -889,15 +869,10 @@ class TestConsumerCreatedDate(DirectoriesMixin, TestCase):
         THEN:
             - Should parse the date from the filename
         """
-        src = os.path.join(
-            os.path.dirname(__file__),
-            "samples",
-            "documents",
-            "originals",
-            "0000006.pdf",
+        dst = shutil.copy(
+            self.SAMPLE_DIR / "documents" / "originals" / "0000006.pdf",
+            self.dirs.scratch_dir / "0000006.pdf",
         )
-        dst = os.path.join(self.dirs.scratch_dir, "0000006.pdf")
-        shutil.copy(src, dst)
 
         document = self.consumer.try_consume_file(dst)
 
@@ -926,7 +901,7 @@ class PreConsumeTestCase(TestCase):
 
     @mock.patch("documents.consumer.run")
     @mock.patch("documents.consumer.Consumer._send_progress")
-    @override_settings(PRE_CONSUME_SCRIPT="does-not-exist")
+    @override_settings(PRE_CONSUME_SCRIPT=Path("does-not-exist"))
     def test_pre_consume_script_not_found(self, m, m2):
         c = Consumer()
         c.filename = "somefile.pdf"
@@ -936,7 +911,7 @@ class PreConsumeTestCase(TestCase):
     @mock.patch("documents.consumer.run")
     def test_pre_consume_script(self, m):
         with tempfile.NamedTemporaryFile() as script:
-            with override_settings(PRE_CONSUME_SCRIPT=script.name):
+            with override_settings(PRE_CONSUME_SCRIPT=Path(script.name)):
                 c = Consumer()
                 c.original_path = "path-to-file"
                 c.path = "/tmp/somewhere/path-to-file"
@@ -950,7 +925,7 @@ class PreConsumeTestCase(TestCase):
                 command = kwargs["args"]
                 environment = kwargs["env"]
 
-                self.assertEqual(command[0], script.name)
+                self.assertEqual(command[0], Path(script.name))
                 self.assertEqual(command[1], "path-to-file")
 
                 subset = {
@@ -980,7 +955,7 @@ class PreConsumeTestCase(TestCase):
             st = os.stat(script.name)
             os.chmod(script.name, st.st_mode | stat.S_IEXEC)
 
-            with override_settings(PRE_CONSUME_SCRIPT=script.name):
+            with override_settings(PRE_CONSUME_SCRIPT=Path(script.name)):
                 with self.assertLogs("paperless.consumer", level="INFO") as cm:
                     c = Consumer()
                     c.path = "path-to-file"
@@ -1014,7 +989,7 @@ class PreConsumeTestCase(TestCase):
             st = os.stat(script.name)
             os.chmod(script.name, st.st_mode | stat.S_IEXEC)
 
-            with override_settings(PRE_CONSUME_SCRIPT=script.name):
+            with override_settings(PRE_CONSUME_SCRIPT=Path(script.name)):
                 c = Consumer()
                 c.path = "path-to-file"
                 self.assertRaises(
@@ -1045,7 +1020,7 @@ class PostConsumeTestCase(TestCase):
 
         m.assert_not_called()
 
-    @override_settings(POST_CONSUME_SCRIPT="does-not-exist")
+    @override_settings(POST_CONSUME_SCRIPT=Path("does-not-exist"))
     @mock.patch("documents.consumer.Consumer._send_progress")
     def test_post_consume_script_not_found(self, m):
         doc = Document.objects.create(title="Test", mime_type="application/pdf")
@@ -1060,7 +1035,7 @@ class PostConsumeTestCase(TestCase):
     @mock.patch("documents.consumer.run")
     def test_post_consume_script_simple(self, m):
         with tempfile.NamedTemporaryFile() as script:
-            with override_settings(POST_CONSUME_SCRIPT=script.name):
+            with override_settings(POST_CONSUME_SCRIPT=Path(script.name)):
                 doc = Document.objects.create(title="Test", mime_type="application/pdf")
 
                 Consumer().run_post_consume_script(doc)
@@ -1070,7 +1045,7 @@ class PostConsumeTestCase(TestCase):
     @mock.patch("documents.consumer.run")
     def test_post_consume_script_with_correspondent(self, m):
         with tempfile.NamedTemporaryFile() as script:
-            with override_settings(POST_CONSUME_SCRIPT=script.name):
+            with override_settings(POST_CONSUME_SCRIPT=Path(script.name)):
                 c = Correspondent.objects.create(name="my_bank")
                 doc = Document.objects.create(
                     title="Test",
@@ -1093,7 +1068,7 @@ class PostConsumeTestCase(TestCase):
                 command = kwargs["args"]
                 environment = kwargs["env"]
 
-                self.assertEqual(command[0], script.name)
+                self.assertEqual(command[0], Path(script.name))
                 self.assertEqual(command[1], str(doc.pk))
                 self.assertEqual(command[5], f"/api/documents/{doc.pk}/download/")
                 self.assertEqual(command[6], f"/api/documents/{doc.pk}/thumb/")
@@ -1130,7 +1105,7 @@ class PostConsumeTestCase(TestCase):
             st = os.stat(script.name)
             os.chmod(script.name, st.st_mode | stat.S_IEXEC)
 
-            with override_settings(POST_CONSUME_SCRIPT=script.name):
+            with override_settings(POST_CONSUME_SCRIPT=Path(script.name)):
                 c = Consumer()
                 doc = Document.objects.create(title="Test", mime_type="application/pdf")
                 c.path = "path-to-file"
