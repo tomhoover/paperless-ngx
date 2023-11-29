@@ -196,7 +196,7 @@ class CopyParser(DocumentParser):
 
     def parse(self, document_path, mime_type, file_name=None):
         self.text = "The text"
-        self.archive_path = os.path.join(self.tempdir, "archive.pdf")
+        self.archive_path = self.tempdir / "archive.pdf"
         shutil.copy(document_path, self.archive_path)
 
 

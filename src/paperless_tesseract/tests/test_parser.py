@@ -1,4 +1,3 @@
-import os
 import shutil
 import tempfile
 import uuid
@@ -578,8 +577,7 @@ class TestParser(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
             ["page 1", "page 2", "page 3", "page 4", "page 5", "page 6"],
         )
 
-        with open(os.path.join(parser.tempdir, "sidecar.txt")) as f:
-            sidecar = f.read()
+        sidecar = (parser.tempdir / "sidecar.txt").read_text()
 
         self.assertIn("[OCR skipped on page(s) 4-6]", sidecar)
 
@@ -613,8 +611,7 @@ class TestParser(DirectoriesMixin, FileSystemAssertsMixin, TestCase):
             ],
         )
 
-        with open(os.path.join(parser.tempdir, "sidecar.txt")) as f:
-            sidecar = f.read().lower()
+        sidecar = (parser.tempdir / "sidecar.txt").read_text().lower()
 
         self.assertIn("this is some text, but in an image, also on page 1.", sidecar)
         self.assertNotIn(

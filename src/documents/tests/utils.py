@@ -1,8 +1,8 @@
+import dataclasses
 import shutil
 import tempfile
 import time
 import warnings
-from collections import namedtuple
 from collections.abc import Iterator
 from contextlib import contextmanager
 from os import PathLike
@@ -25,63 +25,72 @@ from documents.data_models import DocumentMetadataOverrides
 from documents.parsers import ParseError
 
 
-def setup_directories():
-    dirs = namedtuple("Dirs", ())
+@dataclasses.dataclass
+class PaperlessDirectories:
+    data_dir: Path = dataclasses.field(kw_only=True)
+    scratch_dir: Path = dataclasses.field(kw_only=True)
+    media_dir: Path = dataclasses.field(kw_only=True)
+    consumption_dir: Path = dataclasses.field(kw_only=True)
+    static_dir: Path = dataclasses.field(kw_only=True)
+    index_dir: Path = dataclasses.field(init=False)
+    originals_dir: Path = dataclasses.field(init=False)
+    thumbnail_dir: Path = dataclasses.field(init=False)
+    archive_dir: Path = dataclasses.field(init=False)
+    logging_dir: Path = dataclasses.field(init=False)
 
-    dirs.data_dir = Path(tempfile.mkdtemp())
-    dirs.scratch_dir = Path(tempfile.mkdtemp())
-    dirs.media_dir = Path(tempfile.mkdtemp())
-    dirs.consumption_dir = Path(tempfile.mkdtemp())
-    dirs.static_dir = Path(tempfile.mkdtemp())
-    dirs.index_dir = dirs.data_dir / "index"
-    dirs.originals_dir = dirs.media_dir / "documents" / "originals"
-    dirs.thumbnail_dir = dirs.media_dir / "documents" / "thumbnails"
-    dirs.archive_dir = dirs.media_dir / "documents" / "archive"
-    dirs.logging_dir = dirs.data_dir / "log"
+    def __post_init__(self) -> None:
+        self.index_dir = self.data_dir / "index"
+        self.originals_dir = self.media_dir / "documents" / "originals"
+        self.thumbnail_dir = self.media_dir / "documents" / "thumbnails"
+        self.archive_dir = self.media_dir / "documents" / "archive"
+        self.logging_dir = self.data_dir / "log"
 
-    dirs.index_dir.mkdir(parents=True, exist_ok=True)
-    dirs.originals_dir.mkdir(parents=True, exist_ok=True)
-    dirs.thumbnail_dir.mkdir(parents=True, exist_ok=True)
-    dirs.archive_dir.mkdir(parents=True, exist_ok=True)
-    dirs.logging_dir.mkdir(parents=True, exist_ok=True)
+        self.index_dir.mkdir(parents=True, exist_ok=True)
+        self.originals_dir.mkdir(parents=True, exist_ok=True)
+        self.thumbnail_dir.mkdir(parents=True, exist_ok=True)
+        self.archive_dir.mkdir(parents=True, exist_ok=True)
+        self.logging_dir.mkdir(parents=True, exist_ok=True)
 
-    dirs.settings_override = override_settings(
-        DATA_DIR=dirs.data_dir,
-        SCRATCH_DIR=dirs.scratch_dir,
-        MEDIA_ROOT=dirs.media_dir,
-        ORIGINALS_DIR=dirs.originals_dir,
-        THUMBNAIL_DIR=dirs.thumbnail_dir,
-        ARCHIVE_DIR=dirs.archive_dir,
-        CONSUMPTION_DIR=dirs.consumption_dir,
-        LOGGING_DIR=dirs.logging_dir,
-        INDEX_DIR=dirs.index_dir,
-        STATIC_ROOT=dirs.static_dir,
-        MODEL_FILE=dirs.data_dir / "classification_model.pickle",
-        MEDIA_LOCK=dirs.media_dir / "media.lock",
-    )
-    dirs.settings_override.enable()
+        self.settings_override = override_settings(
+            DATA_DIR=self.data_dir,
+            SCRATCH_DIR=self.scratch_dir,
+            MEDIA_ROOT=self.media_dir,
+            ORIGINALS_DIR=self.originals_dir,
+            THUMBNAIL_DIR=self.thumbnail_dir,
+            ARCHIVE_DIR=self.archive_dir,
+            CONSUMPTION_DIR=self.consumption_dir,
+            LOGGING_DIR=self.logging_dir,
+            INDEX_DIR=self.index_dir,
+            STATIC_ROOT=self.static_dir,
+            MODEL_FILE=self.data_dir / "classification_model.pickle",
+            MEDIA_LOCK=self.media_dir / "media.lock",
+        )
+        self.settings_override.enable()
 
-    return dirs
-
-
-def remove_dirs(dirs):
-    shutil.rmtree(dirs.media_dir, ignore_errors=True)
-    shutil.rmtree(dirs.data_dir, ignore_errors=True)
-    shutil.rmtree(dirs.scratch_dir, ignore_errors=True)
-    shutil.rmtree(dirs.consumption_dir, ignore_errors=True)
-    shutil.rmtree(dirs.static_dir, ignore_errors=True)
-    dirs.settings_override.disable()
+    def cleanup(self):
+        shutil.rmtree(self.media_dir, ignore_errors=True)
+        shutil.rmtree(self.data_dir, ignore_errors=True)
+        shutil.rmtree(self.scratch_dir, ignore_errors=True)
+        shutil.rmtree(self.consumption_dir, ignore_errors=True)
+        shutil.rmtree(self.static_dir, ignore_errors=True)
+        self.settings_override.disable()
 
 
 @contextmanager
 def paperless_environment():
     dirs = None
     try:
-        dirs = setup_directories()
+        dirs = PaperlessDirectories(
+            data_dir=Path(tempfile.mkdtemp()),
+            scratch_dir=Path(tempfile.mkdtemp()),
+            media_dir=Path(tempfile.mkdtemp()),
+            consumption_dir=Path(tempfile.mkdtemp()),
+            static_dir=Path(tempfile.mkdtemp()),
+        )
         yield dirs
     finally:
         if dirs:
-            remove_dirs(dirs)
+            dirs.cleanup()
 
 
 def util_call_with_backoff(
@@ -146,17 +155,19 @@ def util_call_with_backoff(
 
 
 class DirectoriesMixin:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.dirs = None
-
     def setUp(self) -> None:
-        self.dirs = setup_directories()
+        self.dirs = PaperlessDirectories(
+            data_dir=Path(tempfile.mkdtemp()),
+            scratch_dir=Path(tempfile.mkdtemp()),
+            media_dir=Path(tempfile.mkdtemp()),
+            consumption_dir=Path(tempfile.mkdtemp()),
+            static_dir=Path(tempfile.mkdtemp()),
+        )
         super().setUp()
 
     def tearDown(self) -> None:
         super().tearDown()
-        remove_dirs(self.dirs)
+        self.dirs.cleanup()
 
 
 class FileSystemAssertsMixin:

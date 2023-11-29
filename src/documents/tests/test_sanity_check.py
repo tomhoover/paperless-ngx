@@ -13,38 +13,22 @@ from documents.tests.utils import DirectoriesMixin
 
 
 class TestSanityCheck(DirectoriesMixin, TestCase):
+    SAMPLE_DIR = Path(__file__).parent / "samples"
+
     def make_test_data(self):
         with filelock.FileLock(settings.MEDIA_LOCK):
             # just make sure that the lockfile is present.
             shutil.copy(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    "samples",
-                    "documents",
-                    "originals",
-                    "0000001.pdf",
-                ),
-                os.path.join(self.dirs.originals_dir, "0000001.pdf"),
+                self.SAMPLE_DIR / "documents" / "originals" / "0000001.pdf",
+                self.dirs.originals_dir / "0000001.pdf",
             )
             shutil.copy(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    "samples",
-                    "documents",
-                    "archive",
-                    "0000001.pdf",
-                ),
-                os.path.join(self.dirs.archive_dir, "0000001.pdf"),
+                self.SAMPLE_DIR / "documents" / "archive" / "0000001.pdf",
+                self.dirs.archive_dir / "0000001.pdf",
             )
             shutil.copy(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    "samples",
-                    "documents",
-                    "thumbnails",
-                    "0000001.webp",
-                ),
-                os.path.join(self.dirs.thumbnail_dir, "0000001.webp"),
+                self.SAMPLE_DIR / "documents" / "thumbnails" / "0000001.webp",
+                self.dirs.thumbnail_dir / "0000001.webp",
             )
 
         return Document.objects.create(
@@ -150,7 +134,7 @@ class TestSanityCheck(DirectoriesMixin, TestCase):
 
     def test_orphaned_file(self):
         self.make_test_data()
-        Path(self.dirs.originals_dir, "orphaned").touch()
+        (self.dirs.originals_dir / "orphaned").touch()
         messages = check_sanity()
         self.assertTrue(messages.has_warning)
         self.assertRegex(
