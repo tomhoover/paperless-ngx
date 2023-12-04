@@ -27,11 +27,11 @@ from documents.parsers import ParseError
 
 @dataclasses.dataclass
 class PaperlessDirectories:
-    data_dir: Path = dataclasses.field(kw_only=True)
-    scratch_dir: Path = dataclasses.field(kw_only=True)
-    media_dir: Path = dataclasses.field(kw_only=True)
-    consumption_dir: Path = dataclasses.field(kw_only=True)
-    static_dir: Path = dataclasses.field(kw_only=True)
+    data_dir: Path
+    scratch_dir: Path
+    media_dir: Path
+    consumption_dir: Path
+    static_dir: Path
     index_dir: Path = dataclasses.field(init=False)
     originals_dir: Path = dataclasses.field(init=False)
     thumbnail_dir: Path = dataclasses.field(init=False)
