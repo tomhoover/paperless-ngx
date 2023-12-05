@@ -52,7 +52,7 @@ ENV \
 ARG TARGETARCH
 ARG TARGETVARIANT
 # Lock this version
-ARG S6_OVERLAY_VERSION=3.1.6.0
+ARG S6_OVERLAY_VERSION=3.1.6.2
 
 # Lock these are well to prevent rebuilds as much as possible
 ARG S6_BUILD_TIME_PKGS="curl \
