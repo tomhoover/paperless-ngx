@@ -613,7 +613,7 @@ class TestDocumentApi(DirectoriesMixin, DocumentConsumeDelayMixin, APITestCase):
         results = response.data["results"]
         self.assertEqual(len(results), 0)
 
-    def test_document_owner_filters(self):
+    def test_document_permissions_filters(self):
         """
         GIVEN:
             - Documents with owners, with and without granted permissions
@@ -703,6 +703,18 @@ class TestDocumentApi(DirectoriesMixin, DocumentConsumeDelayMixin, APITestCase):
         self.assertCountEqual(
             [results[0]["id"], results[1]["id"], results[2]["id"]],
             [u1_doc1.id, u1_doc2.id, u2_doc2.id],
+        )
+
+        assign_perm("view_document", u2, u1_doc1)
+
+        # Will show only documents shared by user
+        response = self.client.get(f"/api/documents/?shared_by__id={u1.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data["results"]
+        self.assertEqual(len(results), 1)
+        self.assertCountEqual(
+            [results[0]["id"]],
+            [u1_doc1.id],
         )
 
     def test_search(self):
@@ -1511,7 +1523,7 @@ class TestDocumentApi(DirectoriesMixin, DocumentConsumeDelayMixin, APITestCase):
         u1.user_permissions.add(*Permission.objects.filter(codename="view_document"))
         u2.user_permissions.add(*Permission.objects.filter(codename="view_document"))
 
-        Document.objects.create(checksum="1", content="test 1", owner=u1)
+        d1 = Document.objects.create(checksum="1", content="test 1", owner=u1)
         d2 = Document.objects.create(checksum="2", content="test 2", owner=u2)
         d3 = Document.objects.create(checksum="3", content="test 3", owner=u2)
         Document.objects.create(checksum="4", content="test 4")
@@ -1536,9 +1548,10 @@ class TestDocumentApi(DirectoriesMixin, DocumentConsumeDelayMixin, APITestCase):
 
         assign_perm("view_document", u1, d2)
         assign_perm("view_document", u1, d3)
+        assign_perm("view_document", u2, d1)
 
         with AsyncWriter(index.open_index()) as writer:
-            for doc in [d2, d3]:
+            for doc in [d1, d2, d3]:
                 index.update_document(writer, doc)
 
         self.client.force_authenticate(user=u1)
@@ -1553,6 +1566,8 @@ class TestDocumentApi(DirectoriesMixin, DocumentConsumeDelayMixin, APITestCase):
         r = self.client.get(f"/api/documents/?query=test&owner__id__in={u1.id}")
         self.assertEqual(r.data["count"], 1)
         r = self.client.get("/api/documents/?query=test&owner__isnull=true")
+        self.assertEqual(r.data["count"], 1)
+        r = self.client.get(f"/api/documents/?query=test&shared_by__id={u1.id}")
         self.assertEqual(r.data["count"], 1)
 
     def test_search_sorting(self):
@@ -4599,10 +4614,16 @@ class TestApiAuth(DirectoriesMixin, APITestCase):
         self.assertNotIn("permissions", resp_data["results"][0])
         self.assertIn("user_can_change", resp_data["results"][0])
         self.assertEqual(resp_data["results"][0]["user_can_change"], True)  # doc1
-        self.assertEqual(resp_data["results"][0]["is_shared"], False)  # doc1
+        self.assertEqual(
+            resp_data["results"][0]["is_shared_by_requester"],
+            False,
+        )  # doc1
         self.assertEqual(resp_data["results"][1]["user_can_change"], False)  # doc2
         self.assertEqual(resp_data["results"][2]["user_can_change"], True)  # doc3
-        self.assertEqual(resp_data["results"][3]["is_shared"], True)  # doc4
+        self.assertEqual(
+            resp_data["results"][3]["is_shared_by_requester"],
+            True,
+        )  # doc4
 
         response = self.client.get(
             "/api/documents/?full_perms=true",
@@ -4615,7 +4636,7 @@ class TestApiAuth(DirectoriesMixin, APITestCase):
 
         self.assertIn("permissions", resp_data["results"][0])
         self.assertNotIn("user_can_change", resp_data["results"][0])
-        self.assertNotIn("is_shared", resp_data["results"][0])
+        self.assertNotIn("is_shared_by_requester", resp_data["results"][0])
 
 
 class TestApiRemoteVersion(DirectoriesMixin, APITestCase):
